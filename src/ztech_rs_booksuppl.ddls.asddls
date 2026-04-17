@@ -1,6 +1,7 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'Booking Supliment Child entity'
 @Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #COMPOSITE
 define view entity ztech_rs_booksuppl
   as select from /dmo/booksuppl_m
   association        to parent ztech_rs_booking as _Booking        on  $projection.TravelId  = _Booking.TravelId

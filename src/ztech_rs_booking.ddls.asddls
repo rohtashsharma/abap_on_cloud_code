@@ -1,6 +1,7 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'Booking CDS entity as first child'
 @Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #COMPOSITE
 define view entity ztech_rs_booking
   as select from /dmo/booking_m
   composition [0..*] of ztech_rs_booksuppl           as _BookingSuppl
