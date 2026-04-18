@@ -2,6 +2,7 @@
 @EndUserText.label: 'Projection for root travel entity'
 @Metadata.ignorePropagatedAnnotations: false
 @VDM.viewType: #CONSUMPTION
+@Metadata.allowExtensions: true
 define root view entity ZTECH_RS_TRAVEL_PROCESSOR
   as projection on ztech_rs_travel
 {
