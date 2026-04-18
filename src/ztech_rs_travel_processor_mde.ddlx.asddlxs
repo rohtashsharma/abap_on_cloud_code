@@ -20,7 +20,7 @@ annotate entity ZTECH_RS_TRAVEL_PROCESSOR with
   //    CurrencyCode;
   //    Description;
   @UI.selectionField: [{ position: 50 }]
-  @UI.lineItem: [{ position: 60 }]
+  @UI.lineItem: [{ position: 60, importance: #HIGH, criticality: 'StatusColour'}]
   OverallStatus;
   //    CreatedBy;
   //    CreatedAt;

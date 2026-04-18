@@ -20,6 +20,10 @@ define root view entity ZTECH_RS_TRAVEL_PROCESSOR
       CreatedAt,
       LastChangedBy,
       LastChangedAt,
+      AgencyName,
+      CustomerName,
+      StatusText,
+      StatusColour,
       /* Associations */
       _Agency,
       _Booking : redirected to composition child ZTECH_RS_BOOKING_PROCESSOR,
