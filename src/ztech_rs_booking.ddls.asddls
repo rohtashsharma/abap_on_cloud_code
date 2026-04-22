@@ -18,8 +18,8 @@ define view entity ztech_rs_booking
       booking_date    as BookingDate,
       @Consumption.valueHelpDefinition: [{
            entity: {
-               name: '/dmo/i_customer',
-               element: 'CustomarID'
+               name: '/DMO/I_Customer',
+               element: 'CustomerID'
                }
            }]
       customer_id     as CustomerId,

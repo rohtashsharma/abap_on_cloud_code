@@ -1,0 +1,5 @@
+CLASS zbp_tech_rs_travel DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF ztech_rs_travel.
+ENDCLASS.
+
+CLASS zbp_tech_rs_travel IMPLEMENTATION.
+ENDCLASS.

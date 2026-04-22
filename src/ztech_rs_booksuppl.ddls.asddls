@@ -13,13 +13,13 @@ define view entity ztech_rs_booksuppl
 {
   key /dmo/booksuppl_m.travel_id             as TravelId,
   key /dmo/booksuppl_m.booking_id            as BookingId,
+  key /dmo/booksuppl_m.booking_supplement_id as BookingSupplementId,
       @Consumption.valueHelpDefinition: [{
                entity: {
                    name: '/DMO/I_Supplement',
                    element: 'SupplementID'
                    }
                }]
-  key /dmo/booksuppl_m.booking_supplement_id as BookingSupplementId,
       /dmo/booksuppl_m.supplement_id         as SupplementId,
       @Semantics.amount.currencyCode: 'CurrencyCode'
       /dmo/booksuppl_m.price                 as Price,

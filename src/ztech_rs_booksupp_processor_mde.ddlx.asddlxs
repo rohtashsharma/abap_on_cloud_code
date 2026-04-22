@@ -2,7 +2,7 @@
 @UI.headerInfo: {
       typeName: 'Suppliment',
       typeNamePlural: 'Suppliments',
-      title: { value: 'BookingSupplementId' },
+      title: { value: 'SupplementId' },
       description: { value : '_SupplimentText.Description' }
 }
 annotate entity ZTECH_RS_BOOKSUPP_PROCESSOR with
