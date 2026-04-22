@@ -2,6 +2,7 @@
 @EndUserText.label: 'Suppliment processor projection entity'
 @Metadata.ignorePropagatedAnnotations: false
 @VDM.viewType: #CONSUMPTION
+@Metadata.allowExtensions: true
 define view entity ZTECH_RS_BOOKSUPP_PROCESSOR
   as projection on ztech_rs_booksuppl
 {

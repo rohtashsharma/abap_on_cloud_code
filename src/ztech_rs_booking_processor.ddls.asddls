@@ -1,7 +1,8 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'Booking Processor projection entity'
 @Metadata.ignorePropagatedAnnotations: false
-@VDM.viewType: #CONSUMPTION
+@VDM.viewType: #CONSUMPTION 
+@Metadata.allowExtensions: true
 define view entity ZTECH_RS_BOOKING_PROCESSOR
   as projection on ztech_rs_booking
 {
