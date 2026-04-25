@@ -6,7 +6,7 @@ CLASS zcl_tech_rs_eml DEFINITION
   PUBLIC SECTION.
 
     INTERFACES if_oo_adt_classrun .
-    DATA: lv_ops TYPE c VALUE 'D'.
+    DATA: lv_ops TYPE c VALUE 'R'.
   PROTECTED SECTION.
   PRIVATE SECTION.
 ENDCLASS.
@@ -32,9 +32,23 @@ CLASS zcl_tech_rs_eml IMPLEMENTATION.
             FAILED DATA(lt_failed)
             REPORTED DATA(lt_reported) .
 
+        "Read dependent booking data for Travel
+        READ ENTITIES OF ztech_rs_travel
+           ENTITY Travel
+           BY \_Booking ALL FIELDS WITH
+           CORRESPONDING #( lt_result )
+           RESULT DATA(lt_result_book)
+           FAILED lt_failed
+           REPORTED lt_reported.
+
+*        out->write(
+*          EXPORTING
+*            data   = lt_result
+*        ).
+
         out->write(
           EXPORTING
-            data   = lt_result
+            data   = lt_result_book
         ).
 
         out->write(
