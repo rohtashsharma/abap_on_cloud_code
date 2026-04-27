@@ -16,13 +16,15 @@ lock master
 authorization master ( instance )
 //it is a field which is used by framework to evaluate whether data was changed in meanwhile or not
 etag master LastChangedAt
+//As a developer we want to take control of creating Travel ID
+early numbering
 {
   //Behaviour what we want RAP to generate for us
   create ( authorization : global );
   update;
   delete;
   //static feature control which says that a user cannot change primary key in update mode
-//  field ( readonly ) TravelId;
+  field ( readonly ) TravelId;
 //Telling the system that the create of booking depends on travel, like you cannot create a sales order
 //line item without creating header
   association _Booking { create; }
