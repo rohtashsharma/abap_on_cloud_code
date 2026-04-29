@@ -7,6 +7,9 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS get_global_authorizations FOR GLOBAL AUTHORIZATION
       IMPORTING REQUEST requested_authorizations FOR Travel RESULT result.
 
+    METHODS get_instance_features FOR INSTANCE FEATURES
+      IMPORTING keys REQUEST requested_features FOR Travel RESULT result.
+
     METHODS earlynumbering_cba_Booking FOR NUMBERING
       IMPORTING entities FOR CREATE Travel\_Booking.
 
@@ -175,6 +178,33 @@ CLASS lhc_Travel IMPLEMENTATION.
       CLEAR: max_booking_id.   "part of Option 2
 
     ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD get_instance_features.
+    "Use Case: Check the status of the current travel request
+    "          if cancelled, disable the booking creation
+
+    "Step 1: EML to read the travel status
+    READ ENTITIES OF ztech_rs_travel IN LOCAL MODE
+      ENTITY travel
+        FIELDS ( travelid overallstatus )
+        WITH CORRESPONDING #( keys )
+      RESULT DATA(lt_result)
+      FAILED DATA(lt_failed).
+
+    "Step 2: return the result with booking creation is possible or not
+    READ TABLE lt_result INTO DATA(ls_result) INDEX 1.
+
+    IF ( ls_result-OverallStatus = 'X' ).
+      DATA(lv_allow) = if_abap_behv=>fc-o-disabled.
+    ELSE.
+      lv_allow = if_abap_behv=>fc-o-enabled.
+    ENDIF.
+
+    result = VALUE #( FOR wa_result IN lt_result ( %tky = wa_result-%tky
+                                                   %assoc-_Booking = lv_allow ) ).
+
 
   ENDMETHOD.
 

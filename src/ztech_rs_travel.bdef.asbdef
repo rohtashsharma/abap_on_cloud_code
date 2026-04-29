@@ -26,9 +26,15 @@ early numbering
   delete;
   //static feature control which says that a user cannot change primary key in update mode
   field ( readonly ) TravelId;
+  //  field ( mandatory : create ) begindate, enddate, agencyid, customerid;
+  //Mandatory for all modes: crete, update, delete....
+  field ( mandatory ) begindate, enddate, agencyid, customerid;
   //Telling the system that the create of booking depends on travel, like you cannot create a sales order
   //line item without creating header
-  association _Booking { create; }
+  //association _Booking { create; }
+
+  //Dynamic feature control - features:instance
+  association _Booking { create ( features : instance ); }
 
   mapping for /dmo/travel_m
     {
@@ -69,6 +75,7 @@ early numbering
   delete;
   //While user is editing the booking data, they cannot change the travel header data
   field ( readonly ) TravelId, BookingId;
+  field ( mandatory ) Carrierid, Connectionid, BookingDate, customerid;
   association _Travel;
   //Suppliment creation is possible with booking
   association _BookingSuppl { create; }
