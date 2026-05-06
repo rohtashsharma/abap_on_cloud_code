@@ -9,6 +9,8 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS get_instance_features FOR INSTANCE FEATURES
       IMPORTING keys REQUEST requested_features FOR Travel RESULT result.
+    METHODS copytravel FOR MODIFY
+      IMPORTING keys FOR ACTION travel~copytravel.
 
     METHODS earlynumbering_cba_Booking FOR NUMBERING
       IMPORTING entities FOR CREATE Travel\_Booking.
@@ -205,6 +207,106 @@ CLASS lhc_Travel IMPLEMENTATION.
     result = VALUE #( FOR wa_result IN lt_result ( %tky = wa_result-%tky
                                                    %assoc-_Booking = lv_allow ) ).
 
+  ENDMETHOD.
+
+  METHOD copyTravel.
+
+    "Shallow Copy: Header
+    "Deep Copy: Header, Items, Sub Items
+
+    "Step 1: Declare data to store new records
+    DATA: travels       TYPE TABLE FOR CREATE ztech_rs_travel\\Travel,
+          bookings_cba  TYPE TABLE FOR CREATE ztech_rs_travel\\Travel\_Booking,
+          booksuppl_cba TYPE TABLE FOR CREATE ztech_rs_travel\\Booking\_BookingSuppl.
+
+    "Step 2: Validate to make sure no data with blank %cid is allowed
+    READ TABLE keys WITH KEY %cid = '' INTO DATA(key_with_initial_cid).
+    ASSERT key_with_initial_cid IS INITIAL.
+
+    "Step 3: Read all existing data of Travel, Booking & Suppliment
+    READ ENTITIES OF ztech_rs_travel IN LOCAL MODE
+    ENTITY Travel
+        ALL FIELDS WITH CORRESPONDING #( keys )
+        RESULT DATA(travel_read_result)
+        FAILED failed.
+
+    READ ENTITIES OF ztech_rs_travel IN LOCAL MODE
+    ENTITY Travel BY \_Booking
+        ALL FIELDS WITH CORRESPONDING #( travel_read_result )
+        RESULT DATA(book_read_result)
+        FAILED failed.
+
+    READ ENTITIES OF ztech_rs_travel IN LOCAL MODE
+    ENTITY booking BY \_BookingSuppl
+        ALL FIELDS WITH CORRESPONDING #( book_read_result )
+        RESULT DATA(booksuppl_read_result)
+        FAILED failed.
+
+    "Step 4: Prepare the data to be inserted in DB
+    LOOP AT travel_read_result ASSIGNING FIELD-SYMBOL(<travel>).
+
+      "For Travel we just need to pass incoming cid, but for booking and booksupp we need to prepare cid and pass
+      "Trvael data prepare
+      APPEND VALUE #( %cid = keys[ %tky = <travel>-%tky ]-%cid
+                      %data = CORRESPONDING #( <travel> EXCEPT travelid )
+                    ) TO travels ASSIGNING FIELD-SYMBOL(<new_travel>).
+
+      <new_travel>-BeginDate = cl_abap_context_info=>get_system_date(  ).
+      <new_travel>-ENDDate = cl_abap_context_info=>get_system_date(  ) + 30.
+      <new_travel>-OverallStatus = 'N'.
+
+      "Booking data preparation
+      "We have to pass %cid_ref to tell system, that the bookings belong to
+      "which travel request - a record was inserted in itab for booking
+      APPEND VALUE #( %cid_ref = keys[ KEY entity %tky = <travel>-%tky ]-%cid
+                    ) TO bookings_cba ASSIGNING FIELD-SYMBOL(<booking_cba>).
+
+      "Prepare all the bookings from existing request which needs to be copied
+      LOOP AT book_read_result ASSIGNING FIELD-SYMBOL(<booking>) WHERE travelid = <travel>-TravelId.
+
+        "Lets pass a unique booking cid - concatenate the CID of travel with booking id of existing travel
+        APPEND VALUE #( %cid = keys[ KEY entity %tky = <travel>-%tky ]-%cid && <booking>-BookingId
+                        %data = CORRESPONDING #( book_read_result[ KEY entity %tky = <booking>-%tky ] EXCEPT travelid ) )
+                    TO <booking_cba>-%target ASSIGNING FIELD-SYMBOL(<new_booking>).
+
+        <new_booking>-BookingStatus = 'N'.
+
+        ""-Start of Supplement
+        "Booking data preparation
+        APPEND VALUE #( %cid_ref = keys[ KEY entity %tky = <travel>-%tky ]-%cid && <booking>-BookingId
+                    ) TO booksuppl_cba ASSIGNING FIELD-SYMBOL(<booksuppl_cba>).
+
+        "Prepare all the bookings from existing request which needs to be copied
+        LOOP AT booksuppl_read_result ASSIGNING FIELD-SYMBOL(<book_suppl>) USING KEY entity WHERE travelid = <travel>-TravelId
+                                                                                              AND bookingid = <booking>-bookingid.
+
+          "Lets pass a unique booking cid - concatenate the CID of travel with booking id of existing travel
+          APPEND VALUE #( %cid = keys[ KEY entity %tky = <travel>-%tky ]-%cid && <booking>-BookingId && <book_suppl>-BookingSupplementId
+                          %data = CORRESPONDING #( <book_suppl> EXCEPT travelid bookingid ) )
+                      TO <booksuppl_cba>-%target.
+
+        ENDLOOP.
+        ""-End of Supplement
+
+
+      ENDLOOP.
+
+    ENDLOOP.
+
+    "Step 5: Insert data in DB using EML
+    MODIFY ENTITIES OF ztech_rs_travel IN LOCAL MODE
+        ENTITY travel
+        CREATE FIELDS ( agencyid customerid begindate enddate bookingfee totalprice currencycode overallstatus )
+         WITH travels
+          CREATE BY \_Booking FIELDS ( bookingid bookingdate customerid carrierid connectionid flightdate flightprice currencycode bookingstatus )
+            WITH bookings_cba
+                ENTITY booking
+                    CREATE BY \_BookingSuppl FIELDS ( BookingSupplementId SupplementId price currencycode )
+                       WITH booksuppl_cba
+        MAPPED DATA(mapped_data).
+
+*    mapped-travel = mapped_data-travel.  "In case of shallow copy only
+    mapped = mapped_data.
 
   ENDMETHOD.
 

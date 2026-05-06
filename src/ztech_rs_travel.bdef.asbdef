@@ -29,6 +29,10 @@ early numbering
   //  field ( mandatory : create ) begindate, enddate, agencyid, customerid;
   //Mandatory for all modes: crete, update, delete....
   field ( mandatory ) begindate, enddate, agencyid, customerid;
+
+  //Since we want to create new BO instance (Factory), our reference is mohan's (instance)
+  factory action copyTravel[1];
+
   //Telling the system that the create of booking depends on travel, like you cannot create a sales order
   //line item without creating header
   //association _Booking { create; }

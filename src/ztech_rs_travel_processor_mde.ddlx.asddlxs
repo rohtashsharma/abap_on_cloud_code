@@ -65,7 +65,8 @@ annotate entity ZTECH_RS_TRAVEL_PROCESSOR with
            }
    ]
   @UI.selectionField: [{ position: 10 }]
-  @UI.lineItem: [{ position: 10 }]
+  @UI.lineItem: [{ position: 10 },
+                 { type: #FOR_ACTION, dataAction: 'copyTravel', label: 'Copy Request' }]
   @UI.identification: [{ position: 10 }]
   TravelId;
   @UI.selectionField: [{ position: 20 }]
