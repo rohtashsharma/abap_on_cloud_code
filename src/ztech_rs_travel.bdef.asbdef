@@ -31,7 +31,14 @@ early numbering
   field ( mandatory ) begindate, enddate, agencyid, customerid;
 
   //Since we want to create new BO instance (Factory), our reference is mohan's (instance)
-  factory action copyTravel[1];
+  factory action copyTravel [1];
+
+  //Here we write internal action to calculate total cost of travel
+  //we can later consume this internal action at multiple places
+  internal action reCalcTotalPrice;
+
+  //determination that calls when user save, modify booking fee
+  determination calcTotalPrice on modify { field Bookingfee, currencycode; create; }
 
   //Telling the system that the create of booking depends on travel, like you cannot create a sales order
   //line item without creating header
@@ -84,6 +91,9 @@ early numbering
   //Suppliment creation is possible with booking
   association _BookingSuppl { create; }
 
+  //determination that calls when user save, modify booking fee
+  determination calcTotalPriceBook on modify { field Flightprice, currencycode; create; }
+
   mapping for /dmo/booking_m
     {
       TravelId      = travel_id;
@@ -102,6 +112,7 @@ early numbering
 
 //------------------------------------------------------------------------------------//
 define behavior for ztech_rs_booksuppl alias BookSupppl
+implementation in class zbp_tech_rs_booksuppl unique
 persistent table /dmo/booksuppl_m
 lock dependent by _Travel
 authorization dependent by _Travel
@@ -113,6 +124,10 @@ early numbering
   field ( readonly ) TravelId, BookingId, BookingSupplementId;
   association _Travel;
   association _Booking;
+
+  //determination that calls when user save, modify booking fee
+  determination calcTotalPriceSuppl on modify { field Price, currencycode; create; }
+
 
   mapping for /dmo/booksuppl_m
     {

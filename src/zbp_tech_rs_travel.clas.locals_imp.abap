@@ -11,6 +11,10 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys REQUEST requested_features FOR Travel RESULT result.
     METHODS copytravel FOR MODIFY
       IMPORTING keys FOR ACTION travel~copytravel.
+    METHODS recalctotalprice FOR MODIFY
+      IMPORTING keys FOR ACTION travel~recalctotalprice.
+    METHODS calctotalprice FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR travel~calctotalprice.
 
     METHODS earlynumbering_cba_Booking FOR NUMBERING
       IMPORTING entities FOR CREATE Travel\_Booking.
@@ -29,7 +33,7 @@ CLASS lhc_Travel IMPLEMENTATION.
   METHOD get_global_authorizations.
   ENDMETHOD.
 
-  METHOD earlynumbering_create.
+  METHOD earlynumbering_create. "Early Numbering
     DATA: entity        TYPE STRUCTURE FOR CREATE ztech_rs_travel,
           travel_id_max TYPE /dmo/travel_id.
 
@@ -113,7 +117,7 @@ CLASS lhc_Travel IMPLEMENTATION.
 
   ENDMETHOD.
 
-  METHOD earlynumbering_cba_Booking.
+  METHOD earlynumbering_cba_Booking.  "Early Numbering
 
     DATA max_booking_id TYPE /dmo/booking_id.
     "entities parameter have 2 fields
@@ -183,7 +187,7 @@ CLASS lhc_Travel IMPLEMENTATION.
 
   ENDMETHOD.
 
-  METHOD get_instance_features.
+  METHOD get_instance_features.  "Feature Control
     "Use Case: Check the status of the current travel request
     "          if cancelled, disable the booking creation
 
@@ -209,7 +213,7 @@ CLASS lhc_Travel IMPLEMENTATION.
 
   ENDMETHOD.
 
-  METHOD copyTravel.
+  METHOD copyTravel.  "Data Action
 
     "Shallow Copy: Header
     "Deep Copy: Header, Items, Sub Items
@@ -307,6 +311,111 @@ CLASS lhc_Travel IMPLEMENTATION.
 
 *    mapped-travel = mapped_data-travel.  "In case of shallow copy only
     mapped = mapped_data.
+
+  ENDMETHOD.
+
+  METHOD reCalcTotalPrice.  "Internal Action
+
+    "Define a structure where we can store all the Booking Fees and Currency Code
+    TYPES: BEGIN OF ty_total_cost,
+             amount   TYPE /dmo/total_price,
+             currency TYPE /dmo/currency_code,
+           END OF ty_total_cost.
+
+    DATA ls_header_curr TYPE /dmo/currency_code.
+    DATA amounts_per_currencycode TYPE STANDARD TABLE OF ty_total_cost.
+
+    "Read all the travel instances, subsequent Bookings inside that using EML
+    READ ENTITIES OF ztech_rs_travel IN LOCAL MODE
+    ENTITY Travel
+        FIELDS ( bookingfee currencycode ) WITH CORRESPONDING #( keys )
+        RESULT DATA(travel)
+        FAILED failed.
+
+    READ ENTITIES OF ztech_rs_travel IN LOCAL MODE
+    ENTITY Travel BY \_Booking
+        FIELDS ( flightprice currencycode ) WITH CORRESPONDING #( travel )
+        RESULT DATA(booking)
+        FAILED failed.
+
+    READ ENTITIES OF ztech_rs_travel IN LOCAL MODE
+    ENTITY booking BY \_BookingSuppl
+        FIELDS ( price currencycode ) WITH CORRESPONDING #( booking )
+        RESULT DATA(booksuppl)
+        FAILED failed.
+
+    "Delete records where currencycode is empty, optionally throw error
+    DELETE travel WHERE currencycode IS INITIAL.
+    DELETE booking WHERE currencycode IS INITIAL.
+    DELETE booksuppl WHERE currencycode IS INITIAL.
+
+    "Loop at header, item and item childs, total all the amounts in itab for common currency
+    LOOP AT travel ASSIGNING FIELD-SYMBOL(<fs_travel>).
+
+      amounts_per_currencycode = VALUE #( ( amount = <fs_travel>-BookingFee
+                                            currency = <fs_travel>-CurrencyCode ) ).
+
+      ls_header_curr = <fs_travel>-CurrencyCode.
+
+      LOOP AT booking INTO DATA(ls_booking) WHERE travelid = <fs_travel>-TravelId.
+
+        "Collect all numeric column values by comparing non-numeric columns
+        COLLECT VALUE ty_total_cost( amount = ls_booking-FlightPrice
+                                     currency = ls_booking-CurrencyCode )
+                             INTO amounts_per_currencycode.
+
+        LOOP AT booksuppl INTO DATA(ls_booksuppl) WHERE travelid = ls_booking-TravelId
+                                                    AND bookingid = ls_booking-bookingid.
+
+          COLLECT VALUE ty_total_cost( amount = ls_booksuppl-Price
+                                       currency = ls_booksuppl-CurrencyCode )
+                           INTO amounts_per_currencycode.
+
+        ENDLOOP.
+      ENDLOOP.
+      CLEAR <fs_travel>-totalprice.
+    ENDLOOP.
+
+    "Compare the currency of Booking and Supplement with header currency
+    LOOP AT amounts_per_currencycode INTO DATA(ls_amount_per_currencycode).
+      "If it does not match, perform currency conversion
+      IF ls_amount_per_currencycode-currency = ls_header_curr.
+        <fs_travel>-TotalPrice += ls_amount_per_currencycode-amount.
+
+      ELSE.
+
+        /dmo/cl_flight_amdp=>convert_currency(
+          EXPORTING
+            iv_amount               = ls_amount_per_currencycode-amount
+            iv_currency_code_source = ls_amount_per_currencycode-currency
+            iv_currency_code_target = ls_header_curr
+            iv_exchange_rate_date   = cl_abap_context_info=>get_system_date(  )
+          IMPORTING
+            ev_amount               = DATA(total_amt)
+        ).
+
+        <fs_travel>-TotalPrice += total_amt.
+
+      ENDIF.
+    ENDLOOP.
+
+    "Total all the amount in a variable and set it to the Travel header level using EML
+    MODIFY ENTITIES OF ztech_rs_travel IN LOCAL MODE
+        ENTITY travel
+            UPDATE FIELDS ( totalprice )
+                WITH CORRESPONDING #( travel ).
+    "Return the mapped data as a result of internal action
+
+
+  ENDMETHOD.
+
+  METHOD calcTotalPrice. "Determination
+
+    "How to call an action using EML
+    MODIFY ENTITIES OF ztech_rs_travel IN LOCAL MODE
+        ENTITY travel
+            EXECUTE reCalcTotalPrice
+            FROM CORRESPONDING #( keys ).
 
   ENDMETHOD.
 
