@@ -113,7 +113,9 @@ CLASS lhc_Travel IMPLEMENTATION.
       travel_id_max += 1.
       entity-TravelId = travel_id_max.
 
-      APPEND VALUE #( %cid = entity-%cid %key = entity-%key ) TO mapped-travel.
+      APPEND VALUE #( %cid = entity-%cid %key = entity-%key
+                      %is_draft = entity-%is_draft
+      ) TO mapped-travel.
 
     ENDLOOP.
 

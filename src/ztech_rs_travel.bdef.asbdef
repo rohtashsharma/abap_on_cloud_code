@@ -5,6 +5,9 @@ managed;
 //Tell the RAP engine to syntax check our code strictly
 strict ( 2 );
 
+//Draft Step 1: Add the Draft feature at BO level
+with draft;
+
 //Root Entity Behaviour
 define behavior for ztech_rs_travel alias Travel
 implementation in class zbp_tech_rs_travel unique
@@ -13,6 +16,12 @@ persistent table /dmo/travel_m
 //How the data will be locked ENQUEUE, DEQUEUE - if the travel data is locked by user, other
 //users paralley cannot edit its booking and suppliments
 lock master
+
+//Draft Step 3: Add the total eTag field
+total etag LastChangedAt
+//Draft Step 4: define a draft table, use quick fix to create it
+draft table ztech_rs_dtrav
+
 //To Control data security - permission -authorization of who can create, edit, delete data
 authorization master ( instance )
 //it is a field which is used by framework to evaluate whether data was changed in meanwhile or not
@@ -38,10 +47,17 @@ early numbering
   internal action reCalcTotalPrice;
 
   //Check the Header data during save/update - validation
-  validation validateHeaderData on save { create; field CustomerId, BeginDate, EndDate, AgencyId ; }
+  validation validateHeaderData on save { create; field CustomerId, BeginDate, EndDate, AgencyId; }
 
   //Ramesh can never book travel request
   determine action validateCustomer { validation validateHeaderData; }
+
+  //Draft Step 2: Satisfy Ego of RAP framework; to put the draft actions
+  draft determine action Prepare;
+  draft action Edit;
+  draft action Resume;
+  draft action Activate;
+  draft action Discard;
 
   //determination that calls when user save, modify booking fee
   determination calcTotalPrice on modify { field Bookingfee, currencycode; create; }
@@ -57,8 +73,8 @@ early numbering
   //line item without creating header
   //association _Booking { create; }
 
-  //Dynamic feature control - features:instance
-  association _Booking { create ( features : instance ); }
+  //Dynamic feature control - features:instance   "//Draft Step 5: Add with Draft for Child entity(Booking)
+  association _Booking { create ( features : instance ); with draft; }
 
   mapping for /dmo/travel_m
     {
@@ -85,6 +101,8 @@ early numbering
 define behavior for ztech_rs_booking alias Booking
 implementation in class zbp_tech_rs_booking unique
 persistent table /dmo/booking_m
+//Draft Step 7: define the draft table for booking data, use quick fix to create booking draft table
+draft table ztech_rs_dbook
 //if parent data is locked, child is also locked automatically
 lock dependent by _Travel
 //lets check the authorization and role at parent level if that pass, we allow booking also to be updated
@@ -100,9 +118,12 @@ early numbering
   //While user is editing the booking data, they cannot change the travel header data
   field ( readonly ) TravelId, BookingId;
   field ( mandatory ) Carrierid, Connectionid, BookingDate, customerid;
-  association _Travel;
-  //Suppliment creation is possible with booking
-  association _BookingSuppl { create; }
+  association _Travel { with draft; }
+
+  //Draft Step 6: Satisfy Ego of RAP framework; to put the draft actions
+
+  //Suppliment creation is possible with booking  "//Draft Step 6: Add with Draft for grand Child entity(Booking)
+  association _BookingSuppl { create; with draft; }
 
   //Side effect to make fiori do a GET call to load updated data
   side effects
@@ -134,6 +155,8 @@ early numbering
 define behavior for ztech_rs_booksuppl alias BookSupppl
 implementation in class zbp_tech_rs_booksuppl unique
 persistent table /dmo/booksuppl_m
+//Draft Step 8: define the draft table for booking suppliment data, use quick fix to create booking  suppl draft table
+draft table ztech_rs_dbooks
 lock dependent by _Travel
 authorization dependent by _Travel
 etag master LastChangedAt
@@ -142,8 +165,8 @@ early numbering
   update;
   delete;
   field ( readonly ) TravelId, BookingId, BookingSupplementId;
-  association _Travel;
-  association _Booking;
+  association _Travel { with draft; }
+  association _Booking { with draft; }
 
   //determination that calls when user save, modify booking fee
   determination calcTotalPriceSuppl on modify { field Price, currencycode; create; }

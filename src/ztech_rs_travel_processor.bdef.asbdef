@@ -1,6 +1,7 @@
 projection;
 strict ( 2 );
 use side effects;
+use draft;
 
 define behavior for ZTECH_RS_TRAVEL_PROCESSOR alias Travel
 {
@@ -8,9 +9,15 @@ define behavior for ZTECH_RS_TRAVEL_PROCESSOR alias Travel
   use update;
   use delete;
 
+  use action Activate;
+  use action Edit;
+  use action Resume;
+  use action Prepare;
+  use action Discard;
+
   use action copyTravel;
 
-  use association _Booking { create; }
+  use association _Booking { create; with draft; }
 }
 
 define behavior for ZTECH_RS_BOOKING_PROCESSOR //alias <alias_name>
@@ -18,8 +25,8 @@ define behavior for ZTECH_RS_BOOKING_PROCESSOR //alias <alias_name>
   use update;
   use delete;
 
-  use association _Travel;
-  use association _BookingSuppl { create; }
+  use association _Travel { with draft; }
+  use association _BookingSuppl { create; with draft; }
 }
 
 define behavior for ZTECH_RS_BOOKSUPP_PROCESSOR alias BookSupppl
@@ -27,6 +34,6 @@ define behavior for ZTECH_RS_BOOKSUPP_PROCESSOR alias BookSupppl
   use update;
   use delete;
 
-  use association _Travel;
-  use association _Booking;
+  use association _Travel { with draft; }
+  use association _Booking { with draft; }
 }
