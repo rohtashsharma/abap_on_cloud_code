@@ -37,8 +37,21 @@ early numbering
   //we can later consume this internal action at multiple places
   internal action reCalcTotalPrice;
 
+  //Check the Header data during save/update - validation
+  validation validateHeaderData on save { create; field CustomerId, BeginDate, EndDate, AgencyId ; }
+
+  //Ramesh can never book travel request
+  determine action validateCustomer { validation validateHeaderData; }
+
   //determination that calls when user save, modify booking fee
   determination calcTotalPrice on modify { field Bookingfee, currencycode; create; }
+
+  //Side effect to make fiori do a GET call to load updated data
+  side effects
+  {
+    field Bookingfee affects field TotalPrice;
+    entity _Booking affects field TotalPrice;
+  }
 
   //Telling the system that the create of booking depends on travel, like you cannot create a sales order
   //line item without creating header
@@ -91,6 +104,13 @@ early numbering
   //Suppliment creation is possible with booking
   association _BookingSuppl { create; }
 
+  //Side effect to make fiori do a GET call to load updated data
+  side effects
+  {
+    field FlightPrice affects field _Travel.TotalPrice;
+    entity _BookingSuppl affects field _Travel.TotalPrice;
+  }
+
   //determination that calls when user save, modify booking fee
   determination calcTotalPriceBook on modify { field Flightprice, currencycode; create; }
 
@@ -128,6 +148,11 @@ early numbering
   //determination that calls when user save, modify booking fee
   determination calcTotalPriceSuppl on modify { field Price, currencycode; create; }
 
+  //Side effect to make fiori do a GET call to load updated data
+  side effects
+  {
+    field Price affects field _Travel.TotalPrice;
+  }
 
   mapping for /dmo/booksuppl_m
     {

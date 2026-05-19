@@ -1,5 +1,6 @@
 projection;
 strict ( 2 );
+use side effects;
 
 define behavior for ZTECH_RS_TRAVEL_PROCESSOR alias Travel
 {
