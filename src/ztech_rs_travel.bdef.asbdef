@@ -49,8 +49,10 @@ early numbering
   //Check the Header data during save/update - validation
   validation validateHeaderData on save { create; field CustomerId, BeginDate, EndDate, AgencyId; }
 
-  //Ramesh can never book travel request
-  determine action validateCustomer { validation validateHeaderData; }
+  //You can invoke it by a button click or using side effect (on fly while draft)
+  determine action validateCustomer {
+                validation validateHeaderData;
+          }
 
   //Draft Step 2: Satisfy Ego of RAP framework; to put the draft actions
   draft determine action Prepare;
@@ -67,6 +69,9 @@ early numbering
   {
     field Bookingfee affects field TotalPrice;
     entity _Booking affects field TotalPrice;
+    //Side effect which triggers the validation on fly
+    determine action validateCustomer executed on field CustomerId
+                                            affects messages;
   }
 
   //Telling the system that the create of booking depends on travel, like you cannot create a sales order
