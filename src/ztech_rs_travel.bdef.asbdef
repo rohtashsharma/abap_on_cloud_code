@@ -6,7 +6,8 @@ managed;
 strict ( 2 );
 
 //Draft Step 1: Add the Draft feature at BO level
-with draft;
+//with draft;
+with collaborative draft;
 
 //Root Entity Behaviour
 define behavior for ztech_rs_travel alias Travel
@@ -20,7 +21,7 @@ lock master
 //Draft Step 3: Add the total eTag field
 total etag LastChangedAt
 //Draft Step 4: define a draft table, use quick fix to create it
-draft table ztech_rs_dtrav
+draft table ztech_rs_dtrav query ztech_rs_travq
 
 //To Control data security - permission -authorization of who can create, edit, delete data
 authorization master ( instance )
@@ -60,6 +61,7 @@ early numbering
   draft action Resume;
   draft action Activate;
   draft action Discard;
+  draft action Share;
 
   //determination that calls when user save, modify booking fee
   determination calcTotalPrice on modify { field Bookingfee, currencycode; create; }

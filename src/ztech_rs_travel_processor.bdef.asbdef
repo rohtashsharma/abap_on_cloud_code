@@ -1,7 +1,8 @@
 projection;
 strict ( 2 );
 use side effects;
-use draft;
+//use draft;
+use collaborative draft;
 
 define behavior for ZTECH_RS_TRAVEL_PROCESSOR alias Travel
 {
@@ -14,6 +15,7 @@ define behavior for ZTECH_RS_TRAVEL_PROCESSOR alias Travel
   use action Resume;
   use action Prepare;
   use action Discard;
+  use action Share;
 
   use action validateCustomer;
 
