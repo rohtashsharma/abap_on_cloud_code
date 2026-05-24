@@ -13,7 +13,8 @@ ENDCLASS.
 
 
 
-CLASS zcl_tech_rs_eml IMPLEMENTATION.
+CLASS ZCL_TECH_RS_EML IMPLEMENTATION.
+
 
   METHOD if_oo_adt_classrun~main.
 

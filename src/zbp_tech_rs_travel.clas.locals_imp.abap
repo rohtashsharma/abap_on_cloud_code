@@ -29,7 +29,57 @@ ENDCLASS.
 CLASS lhc_Travel IMPLEMENTATION.
 
   METHOD get_instance_authorizations.
-    "AUTHORITY_CHECK
+*    When a user tries to edit a travel request,
+*    if the travel request status is CANCELLED,
+*    then we need to check if the given user is a MANAGER.
+*    If yes, they can edit the cancelled request also.
+*    However else, the user is not allowed to edit cancelled request.
+
+    "Step 1: Define a return data structure of return table
+    DATA ls_return LIKE LINE OF result.
+
+    "Step 2: Read the instance of the BO, read overallstatus
+    READ ENTITIES OF ztech_rs_travel IN LOCAL MODE
+        ENTITY travel
+        FIELDS ( travelid overallstatus )
+        WITH CORRESPONDING #( keys )
+        RESULT DATA(lt_travel)
+        FAILED DATA(lt_failed).
+
+    "Step 3: Check if the status is cancelled
+    LOOP AT lt_travel INTO DATA(ls_travel).
+
+      DATA(lv_auth) = abap_false.
+
+      IF ( ls_travel-OverallStatus = 'X' ).
+
+        AUTHORITY-CHECK OBJECT 'ZTECH_AB'
+            ID 'ACTVT' FIELD '02'.
+
+        IF sy-subrc EQ 0.   "Pass user is manager
+          lv_auth = abap_true.
+        ENDIF.
+
+      ELSE.
+        lv_auth = abap_true.
+      ENDIF.
+
+      ls_return = VALUE #( travelid = ls_travel-travelid
+                           %action-edit = COND #(              "For V4
+                                                 WHEN lv_auth EQ abap_false
+                                                  THEN if_abap_behv=>auth-unauthorized
+                                                  ELSE if_abap_behv=>auth-allowed
+                            )
+                            %update = COND #(              "For V2
+                                             WHEN lv_auth EQ abap_false
+                                             THEN if_abap_behv=>auth-unauthorized
+                                             ELSE if_abap_behv=>auth-allowed
+                            )
+       ).
+
+      APPEND ls_return TO result.
+    ENDLOOP.
+
   ENDMETHOD.
 
   METHOD get_global_authorizations.

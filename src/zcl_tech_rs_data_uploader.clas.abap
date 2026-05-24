@@ -12,7 +12,10 @@ CLASS zcl_tech_rs_data_uploader DEFINITION
   PRIVATE SECTION.
 ENDCLASS.
 
-CLASS zcl_tech_rs_data_uploader IMPLEMENTATION.
+
+
+CLASS ZCL_TECH_RS_DATA_UPLOADER IMPLEMENTATION.
+
 
   METHOD fill_master_data.
     DATA: li_bp   TYPE TABLE OF ztech_rs_bp,
@@ -156,6 +159,7 @@ CLASS zcl_tech_rs_data_uploader IMPLEMENTATION.
 
   ENDMETHOD.
 
+
   METHOD fill_transaction_data.
     DATA : o_rand    TYPE REF TO cl_abap_random_int,
            n         TYPE i,
@@ -213,9 +217,11 @@ CLASS zcl_tech_rs_data_uploader IMPLEMENTATION.
     INSERT ztech_rs_so_item FROM TABLE @lt_so_i.
   ENDMETHOD.
 
+
   METHOD flush.
     DELETE FROM : ztech_rs_bp, ztech_rs_product, ztech_rs_so_hdr, ztech_rs_so_item.
   ENDMETHOD.
+
 
   METHOD if_oo_adt_classrun~main.
     me->flush( ).
@@ -230,5 +236,4 @@ CLASS zcl_tech_rs_data_uploader IMPLEMENTATION.
     ).
 
   ENDMETHOD.
-
 ENDCLASS.
