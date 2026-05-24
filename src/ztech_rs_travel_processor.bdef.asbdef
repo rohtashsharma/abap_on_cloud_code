@@ -5,8 +5,10 @@ use side effects;
 use collaborative draft;
 
 define behavior for ZTECH_RS_TRAVEL_PROCESSOR alias Travel
+//now we have another behaviour imp class in behaviour pool
+implementation in class zcl_tech_rs_trav_proc unique
 {
-  use create;
+  use create (augment);
   use update;
   use delete;
 
