@@ -1,3 +1,63 @@
+CLASS lsc_ztech_rs_travel DEFINITION INHERITING FROM cl_abap_behavior_saver.
+
+  PROTECTED SECTION.
+
+    METHODS save_modified REDEFINITION.
+
+ENDCLASS.
+
+CLASS lsc_ztech_rs_travel IMPLEMENTATION.
+
+  METHOD save_modified.
+    "" CALL FUNCTION 'SWDD_WORKFLOW_START'
+    DATA: lt_log_data   TYPE STANDARD TABLE OF /dmo/log_travel,
+          lt_final_data TYPE STANDARD TABLE OF /dmo/log_travel.
+
+    IF update-travel IS NOT INITIAL.
+
+      "get all changes in our local table done by user
+      lt_log_data = CORRESPONDING #( update-travel MAPPING travel_id = TravelId ).
+
+      LOOP AT update-travel ASSIGNING FIELD-SYMBOL(<fs_changes>).
+
+
+        ASSIGN lt_log_data[ travel_id = <fs_changes>-TravelId ]
+          TO FIELD-SYMBOL(<travel_log_db>).
+
+        GET TIME STAMP FIELD <travel_log_db>-created_at.
+
+        IF <fs_changes>-%control-CustomerId = if_abap_behv=>mk-on.
+
+          <travel_log_db>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
+          <travel_log_db>-changed_field_name = 'roh_customer'.
+          <travel_log_db>-changed_value = <fs_changes>-CustomerId.
+          <travel_log_db>-changing_operation = 'update'.
+
+          APPEND <travel_log_db> TO lt_final_data.
+
+        ENDIF.
+
+        IF <fs_changes>-%control-AgencyId = if_abap_behv=>mk-on.
+
+          <travel_log_db>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
+          <travel_log_db>-changed_field_name = 'roh_agency'.
+          <travel_log_db>-changed_value = <fs_changes>-AgencyId.
+          <travel_log_db>-changing_operation = 'update'.
+
+          APPEND <travel_log_db> TO lt_final_data.
+
+        ENDIF.
+
+      ENDLOOP.
+
+      INSERT /dmo/log_travel FROM TABLE @lt_final_data.
+
+    ENDIF.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
 CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
 
@@ -54,7 +114,7 @@ CLASS lhc_Travel IMPLEMENTATION.
       IF ( ls_travel-OverallStatus = 'X' ).
 
         AUTHORITY-CHECK OBJECT 'ZTECH_AB'
-            ID 'ACTVT' FIELD '02'.
+        ID 'ACTVT' FIELD '02'.
 
         IF sy-subrc EQ 0.   "Pass user is manager
           lv_auth = abap_true.
