@@ -24,6 +24,12 @@ define root view entity ZTECH_RS_TRAVEL_PROCESSOR
       CustomerName,
       StatusText,
       StatusColour,
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_TECH_RS_VE'
+      @EndUserText.label: 'CO2 Tax'
+      virtual CO2Tax: abap.int4,
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_TECH_RS_VE'
+      @EndUserText.label: 'Day of Travel'
+      virtual dayOfFlight: abap.char(10),
       /* Associations */
       _Agency,
       _Booking : redirected to composition child ZTECH_RS_BOOKING_PROCESSOR,

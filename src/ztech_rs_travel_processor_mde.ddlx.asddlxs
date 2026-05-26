@@ -98,6 +98,12 @@ annotate entity ZTECH_RS_TRAVEL_PROCESSOR with
   @UI.dataPoint: { qualifier: 'StatusQualifier', title: 'Travel Status', criticality: 'StatusColour' }
   @UI.fieldGroup: [{ position: 30, qualifier: 'DateQualifier' }]
   OverallStatus;
+  @UI.lineItem: [{ position: 70, importance: #HIGH }]
+  @UI.fieldGroup: [{ position: 60, qualifier: 'DateQualifier' }]
+  dayOfFlight;
+  @UI.lineItem: [{ position: 80, importance: #HIGH }]
+  @UI.fieldGroup: [{ position: 70, qualifier: 'DateQualifier' }]
+  CO2Tax;
   //    CreatedBy;
   //    CreatedAt;
   //    LastChangedBy;
